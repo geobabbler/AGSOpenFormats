@@ -1,0 +1,5 @@
+C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\bin\Debug\GeoJSONSOE.dll
+C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\bin\Debug\GeoJSONSOE.pdb
+C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\obj\Debug\GeoJSONSOE.dll
+C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\obj\Debug\GeoJSONSOE.pdb
+C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\bin\Debug\GeoJSONSOE.soe
