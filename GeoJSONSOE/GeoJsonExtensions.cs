@@ -1,6 +1,6 @@
 ﻿//The MIT License
 
-//Copyright (c) 2012 Zekiah Technologies, Inc.
+//Copyright (c) 2013 Zekiah Technologies, Inc.
 
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -109,31 +109,17 @@ namespace Zekiah.GeoJSON
                                 fldval = "blob";
                                 break;
                             case esriFieldType.esriFieldTypeSmallInteger:
-                                fldval = row.Value[fldnum].ToString();
-                                break;
                             case esriFieldType.esriFieldTypeInteger:
-                                fldval = row.Value[fldnum].ToString();
-                                break;
                             case esriFieldType.esriFieldTypeSingle:
-                                fldval = row.Value[fldnum].ToString();
-                                break;
                             case esriFieldType.esriFieldTypeDouble:
-                                fldval = row.Value[fldnum].ToString();
-                                break;
                             case esriFieldType.esriFieldTypeString:
+                            case esriFieldType.esriFieldTypeOID:
+                            case esriFieldType.esriFieldTypeGUID:
+                            case esriFieldType.esriFieldTypeGlobalID:
                                 fldval = row.Value[fldnum].ToString();
                                 break;
                             case esriFieldType.esriFieldTypeDate:
                                 fldval = Convert.ToDateTime(row.Value[fldnum]).ToLongTimeString();
-                                break;
-                            case esriFieldType.esriFieldTypeOID:
-                                fldval = row.Value[fldnum].ToString();
-                                break;
-                            case esriFieldType.esriFieldTypeGUID:
-                                fldval = row.Value[fldnum].ToString();
-                                break;
-                            case esriFieldType.esriFieldTypeGlobalID:
-                                fldval = row.Value[fldnum].ToString();
                                 break;
                             default:
                                 break;

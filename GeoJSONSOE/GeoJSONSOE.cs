@@ -1,4 +1,26 @@
-﻿using System;
+﻿//The MIT License
+
+//Copyright (c) 2013 Zekiah Technologies, Inc.
+
+//Permission is hereby granted, free of charge, to any person obtaining a copy
+//of this software and associated documentation files (the "Software"), to deal
+//in the Software without restriction, including without limitation the rights
+//to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//copies of the Software, and to permit persons to whom the Software is
+//furnished to do so, subject to the following conditions:
+
+//The above copyright notice and this permission notice shall be included in
+//all copies or substantial portions of the Software.
+
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,7 +67,7 @@ namespace GeoJSONSOE
 
         public GeoJSONServer()
         {
-            soe_name = "Open Data Formats"; // this.GetType().Name;
+            soe_name = this.GetType().Name;
             logger = new ServerLogger();
             reqHandler = new SoeRestImpl(soe_name, CreateRestSchema()) as IRESTRequestHandler;
         }
@@ -117,36 +139,27 @@ namespace GeoJSONSOE
         {
             responseProperties = null;
             bool applyQuery = true;
-            string retval = "{\"test\": \"result\"}";
-            string parm1Value;
-            bool found = operationInput.TryGetString("query", out parm1Value);
-            if (!found || string.IsNullOrEmpty(parm1Value))
+            string retval = "";
+            string whereClause;
+            bool found = operationInput.TryGetString("query", out whereClause);
+            if (!found || string.IsNullOrEmpty(whereClause))
             {
-                //throw new ArgumentNullException("parm1");
+                //then no definition query
                 applyQuery = false;
             }
 
-            string parm2Value;
-            long? parm2num;
-            found = operationInput.TryGetAsLong("layer", out parm2num); //.TryGetString("layer", out parm2Value);
+            long? layerOrdinal;
+            found = operationInput.TryGetAsLong("layer", out layerOrdinal); //.TryGetString("layer", out parm2Value);
             if (!found)
             {
                 throw new ArgumentNullException("layer");
             }
-            //else if (!long.TryParse(parm2Value, out parm2num))
-            //{
-            //    throw new Exception("layer must be an integer");
-            //}
 
-            JsonObject result = new JsonObject();
             string s = "";
-            //result.AddString("parm1", parm1Value);
-            //result.AddString("parm2", parm2Value);
             ESRI.ArcGIS.Carto.IMapServer mapServer = (ESRI.ArcGIS.Carto.IMapServer)serverObjectHelper.ServerObject;
             ESRI.ArcGIS.Carto.IMapServerDataAccess mapServerObjects = (ESRI.ArcGIS.Carto.IMapServerDataAccess)mapServer;
-            //ESRI.ArcGIS.Carto.IMap map = mapServerObjects.get_Map(mapServer.DefaultMapName);
-            var lyr = mapServerObjects.GetDataSource(mapServer.DefaultMapName, Convert.ToInt32(parm2num));
-            //ILayer lyr = map.Layer[parm2num];
+            var lyr = mapServerObjects.GetDataSource(mapServer.DefaultMapName, Convert.ToInt32(layerOrdinal));
+
             if (lyr is IFeatureClass)
             {
                 IFeatureClass fclass = (IFeatureClass)lyr;
@@ -155,7 +168,7 @@ namespace GeoJSONSOE
                 filter.set_OutputSpatialReference(fclass.ShapeFieldName, getWGS84());
                 if (applyQuery)
                 {
-                    filter.WhereClause = parm1Value;
+                    filter.WhereClause = whereClause;
                 }
                 IFeatureCursor curs = fclass.Search(filter, false);
                 //apply extension methods here
@@ -169,13 +182,11 @@ namespace GeoJSONSOE
                 {
                     s = ex.GetBaseException().ToString(); //.StackTrace;
                 }
-                //IFeature feat = curs.NextFeature();
-                //var s = feat.Value[2].ToString();
                 retval = s;
             }
             else
             {
-                throw new Exception("Layer " + parm2num.ToString() + " is not a feature layer.");
+                throw new Exception("Layer " + layerOrdinal.ToString() + " is not a feature layer.");
             }
             return Encoding.UTF8.GetBytes(retval);
         }
