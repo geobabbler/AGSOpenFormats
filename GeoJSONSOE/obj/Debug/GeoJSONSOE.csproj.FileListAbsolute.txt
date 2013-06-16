@@ -3,3 +3,9 @@ C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\bin\Debug\GeoJSONS
 C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\obj\Debug\GeoJSONSOE.dll
 C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\obj\Debug\GeoJSONSOE.pdb
 C:\Workspace\C#\Experimental\GeoJSONSOE\GeoJSONSOE\GeoJSONSOE\bin\Debug\GeoJSONSOE.soe
+C:\Users\Bill Dollins\Documents\GitHub\AGSOpenFormats\GeoJSONSOE\bin\Debug\GeoJSONSOE.dll
+C:\Users\Bill Dollins\Documents\GitHub\AGSOpenFormats\GeoJSONSOE\bin\Debug\GeoJSONSOE.pdb
+C:\Users\Bill Dollins\Documents\GitHub\AGSOpenFormats\GeoJSONSOE\obj\Debug\GeoJSONSOE.csprojResolveAssemblyReference.cache
+C:\Users\Bill Dollins\Documents\GitHub\AGSOpenFormats\GeoJSONSOE\obj\Debug\GeoJSONSOE.dll
+C:\Users\Bill Dollins\Documents\GitHub\AGSOpenFormats\GeoJSONSOE\obj\Debug\GeoJSONSOE.pdb
+C:\Users\Bill Dollins\Documents\GitHub\AGSOpenFormats\GeoJSONSOE\bin\Debug\GeoJSONSOE.soe

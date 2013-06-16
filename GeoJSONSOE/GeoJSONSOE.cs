@@ -37,6 +37,7 @@ using ESRI.ArcGIS.Carto;
 using ESRI.ArcGIS.SOESupport;
 //using ESRI.ArcGIS.ADF.Connection.Local;
 using Zekiah.GeoJSON;
+using Zekiah.CSV;
 
 
 //TODO: sign the project (project properties > signing tab > sign the assembly)
@@ -112,12 +113,18 @@ namespace GeoJSONSOE
         {
             RestResource rootRes = new RestResource(soe_name, false, RootResHandler);
 
-            RestOperation sampleOper = new RestOperation("GeoJSON",
-                                                      new string[] { "query","layer" },
+            RestOperation geoJsonOper = new RestOperation("GeoJSON",
+                                                      new string[] { "query", "layer" },
                                                       new string[] { "json" },
                                                       ExportGeoJsonHandler);
 
-            rootRes.operations.Add(sampleOper);
+            RestOperation csvOper = new RestOperation("CSV",
+                                                      new string[] { "query", "layer", "headers" },
+                                                      new string[] { "csv" },
+                                                      ExportCsvHandler);
+
+            rootRes.operations.Add(geoJsonOper);
+            rootRes.operations.Add(csvOper);
 
             return rootRes;
         }
@@ -127,8 +134,80 @@ namespace GeoJSONSOE
             responseProperties = null;
 
             JsonObject result = new JsonObject();
- 
+
             return Encoding.UTF8.GetBytes("GeoJSON Export");
+        }
+
+        private byte[] ExportCsvHandler(NameValueCollection boundVariables,
+                                          JsonObject operationInput,
+                                              string outputFormat,
+                                              string requestProperties,
+                                          out string responseProperties)
+        {
+            string retval = "";
+            StringBuilder sb = new StringBuilder();
+            string s = "";
+            bool applyQuery = true;
+            bool? applyHeader = true;
+            bool addHeader = false;
+            responseProperties = "{\"Content-Type\" : \"text/csv\"}";
+
+            string whereClause = "";
+            bool found = operationInput.TryGetString("query", out whereClause);
+            if (!found || string.IsNullOrEmpty(whereClause))
+            {
+                //then no definition query
+                applyQuery = false;
+            }
+
+            long? layerOrdinal;
+            found = operationInput.TryGetAsLong("layer", out layerOrdinal); //.TryGetString("layer", out parm2Value);
+            if (!found)
+            {
+                throw new ArgumentNullException("layer");
+            }
+
+            bool useHeader = operationInput.TryGetAsBoolean("headers", out applyHeader);
+            if (useHeader)
+            {
+                if ((bool)applyHeader)
+                {
+                    addHeader = true;
+                }
+            }
+
+            ESRI.ArcGIS.Carto.IMapServer mapServer = (ESRI.ArcGIS.Carto.IMapServer)serverObjectHelper.ServerObject;
+            ESRI.ArcGIS.Carto.IMapServerDataAccess mapServerObjects = (ESRI.ArcGIS.Carto.IMapServerDataAccess)mapServer;
+            var lyr = mapServerObjects.GetDataSource(mapServer.DefaultMapName, Convert.ToInt32(layerOrdinal));
+            if (lyr is IFeatureClass)
+            {
+                IFeatureClass fclass = (IFeatureClass)lyr;
+                IQueryFilter filter = new QueryFilterClass();
+                filter.set_OutputSpatialReference(fclass.ShapeFieldName, getWGS84());
+                if (applyQuery)
+                {
+                    filter.WhereClause = whereClause;
+                }
+                IFeatureCursor curs = fclass.Search(filter, false);
+                try
+                {
+                    //();
+                    s = curs.ToCSV(addHeader);
+                    Marshal.ReleaseComObject(curs);
+
+                }
+                catch (Exception ex)
+                {
+                    s = ex.GetBaseException().ToString(); //.StackTrace;
+                }
+                retval = s;
+            }
+            else
+            {
+                throw new Exception("Layer " + layerOrdinal.ToString() + " is not a feature layer.");
+            }
+
+            return Encoding.UTF8.GetBytes(sb.ToString());
         }
 
         private byte[] ExportGeoJsonHandler(NameValueCollection boundVariables,
@@ -176,7 +255,7 @@ namespace GeoJSONSOE
                 {
                     s = curs.ToGeoJson();
                     Marshal.ReleaseComObject(curs);
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -219,7 +298,7 @@ namespace GeoJSONSOE
             {
                 return null;
             }
-        } 
+        }
 
 
     }
