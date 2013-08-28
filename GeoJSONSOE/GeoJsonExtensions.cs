@@ -91,6 +91,7 @@ namespace Zekiah.GeoJSON
                 string proptemplate = "\"{0}\": \"{1}\"";
                 for (int fldnum = 0; fldnum < row.Fields.FieldCount; fldnum++)
                 {
+                    proptemplate = "\"{0}\": \"{1}\"";
                     string fldname = row.Fields.Field[fldnum].Name;
                     IField fld = row.Fields.Field[fldnum];
                     string fldval = "";
@@ -112,6 +113,9 @@ namespace Zekiah.GeoJSON
                             case esriFieldType.esriFieldTypeInteger:
                             case esriFieldType.esriFieldTypeSingle:
                             case esriFieldType.esriFieldTypeDouble:
+                                proptemplate = "\"{0}\": {1}";
+                                fldval = row.Value[fldnum].ToString();
+                                break;
                             case esriFieldType.esriFieldTypeString:
                             case esriFieldType.esriFieldTypeOID:
                             case esriFieldType.esriFieldTypeGUID:
