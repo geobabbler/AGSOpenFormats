@@ -115,11 +115,11 @@ namespace GeoJSONSOE
 
             RestOperation geoJsonOper = new RestOperation("GeoJSON",
                                                       new string[] { "query", "layer" },
-                                                      new string[] { "json" },
+                                                      new string[] { "geojson" },
                                                       ExportGeoJsonHandler);
 
             RestOperation csvOper = new RestOperation("CSV",
-                                                      new string[] { "query", "layer", "headers" },
+                                                      new string[] { "query", "layer", "headers"},
                                                       new string[] { "csv" },
                                                       ExportCsvHandler);
 
@@ -149,7 +149,9 @@ namespace GeoJSONSOE
             string s = "";
             bool applyQuery = true;
             bool? applyHeader = true;
+            //bool? applyGeoms = true;
             bool addHeader = false;
+            //bool addGeoms = false;
             responseProperties = "{\"Content-Type\" : \"text/csv\"}";
 
             string whereClause = "";
@@ -176,6 +178,15 @@ namespace GeoJSONSOE
                 }
             }
 
+            //bool useGeoms = operationInput.TryGetAsBoolean("addgeoms", out applyGeoms);
+            //if (useGeoms)
+            //{
+            //    if ((bool)applyGeoms)
+            //    {
+            //        addGeoms = true;
+            //    }
+            //}
+
             ESRI.ArcGIS.Carto.IMapServer mapServer = (ESRI.ArcGIS.Carto.IMapServer)serverObjectHelper.ServerObject;
             ESRI.ArcGIS.Carto.IMapServerDataAccess mapServerObjects = (ESRI.ArcGIS.Carto.IMapServerDataAccess)mapServer;
             var lyr = mapServerObjects.GetDataSource(mapServer.DefaultMapName, Convert.ToInt32(layerOrdinal));
@@ -201,6 +212,7 @@ namespace GeoJSONSOE
                     s = ex.GetBaseException().ToString(); //.StackTrace;
                 }
                 retval = s;
+                sb.Append(retval);
             }
             else
             {
@@ -216,7 +228,7 @@ namespace GeoJSONSOE
                                                       string requestProperties,
                                                   out string responseProperties)
         {
-            responseProperties = null;
+            responseProperties = "{\"Content-Type\" : \"application/json\"}"; ;
             bool applyQuery = true;
             string retval = "";
             string whereClause;

@@ -49,7 +49,7 @@ namespace Zekiah.CSV
             IFeature row = rows.NextFeature();
             while (row != null)
             {
-                sb.AppendLine(row.ToCSV());
+                sb.AppendLine(row.ToCSV(false));
                 row = rows.NextFeature();
             }
 
@@ -57,12 +57,12 @@ namespace Zekiah.CSV
             return retval;
         }
 
-        public static string ToCSV(this IFeature row)
+        public static string ToCSV(this IFeature row, bool includegeoms)
         {
             try
             {
                 StringBuilder sb = new StringBuilder();
-                sb.Append(processFields(row));
+                sb.Append(processFields(row, includegeoms));
                 return sb.ToString();
             }
             catch (Exception ex)
@@ -71,7 +71,7 @@ namespace Zekiah.CSV
             }
         }
 
-        private static string processFields(IFeature row)
+        private static string processFields(IFeature row, bool includegeoms)
         {
             try
             {
@@ -89,7 +89,14 @@ namespace Zekiah.CSV
                         switch (fld.Type)
                         {
                             case esriFieldType.esriFieldTypeGeometry:
-                                fldval = "\"geometry\"";
+                                if (!includegeoms)
+                                {
+                                    fldval = "\"geometry\"";
+                                }
+                                else
+                                {
+                                    fldval = GetHexWkb(row.Shape);
+                                }
                                 break;
                             case esriFieldType.esriFieldTypeBlob:
                                 fldval = "\"blob\"";
@@ -141,6 +148,36 @@ namespace Zekiah.CSV
             }
             catch { }
             return retval;
+        }
+
+        private static string GetHexWkb(IGeometry geom)
+        {
+            string retval = "";
+            try
+            {
+                IWkb wkb = geom as IWkb;
+                int byteCount = wkb.WkbSize;
+                byte[] wkbBytes = new byte[byteCount];
+                wkb.ExportToWkb(ref byteCount, out wkbBytes[0]);
+                retval = ByteArrayToString(wkbBytes, byteCount);
+            }
+            catch { }
+            return retval;
+        }
+
+        private static string ByteArrayToString(byte[] ba, int len)
+        {
+            string hex = BitConverter.ToString(ba);
+            return hex.Replace("-", "");
+            //StringBuilder hex = new StringBuilder(len * 2);
+            //for (int i = 0; i < len; i++)
+            //{
+            //    byte b = ba[i];
+            //    hex.AppendFormat("{0:x2}", b);
+            //}
+            ////foreach (byte b in ba)
+            ////    hex.AppendFormat("{0:x2}", b);
+            //return hex.ToString();
         }
     }
 }
