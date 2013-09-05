@@ -114,7 +114,7 @@ namespace GeoJSONSOE
             RestResource rootRes = new RestResource(soe_name, false, RootResHandler);
 
             RestOperation geoJsonOper = new RestOperation("GeoJSON",
-                                                      new string[] { "query", "layer" },
+                                                      new string[] { "query", "layer","bbox" },
                                                       new string[] { "geojson" },
                                                       ExportGeoJsonHandler);
 
@@ -230,13 +230,64 @@ namespace GeoJSONSOE
         {
             responseProperties = "{\"Content-Type\" : \"application/json\"}"; ;
             bool applyQuery = true;
+            bool useBbox = true;
             string retval = "";
             string whereClause;
+            string boxClause;
+            IPolygon queryGeom = null;
+            Helpers helper = new Helpers();
             bool found = operationInput.TryGetString("query", out whereClause);
             if (!found || string.IsNullOrEmpty(whereClause))
             {
                 //then no definition query
                 applyQuery = false;
+            }
+
+            found = operationInput.TryGetString("bbox", out boxClause);
+            if (!found || string.IsNullOrEmpty(boxClause))
+            {
+                //then no definition query
+                useBbox = false;
+            }
+
+            if (useBbox)
+            {
+                try
+                {
+                    double xmin; double ymin; double xmax; double ymax;
+                    string[] vals = boxClause.Split(new char[] { ',' });
+                    if (vals.Length == 4)
+                    {
+                        bool bxmin = double.TryParse(vals[0], out xmin);
+                        bool bymin = double.TryParse(vals[1], out ymin);
+                        bool bxmax = double.TryParse(vals[2], out xmax);
+                        bool bymax = double.TryParse(vals[3], out ymax);
+
+                        if (bxmin && bymin && bxmax && bymax)
+                        {
+                            queryGeom = new Polygon() as IPolygon;
+                            IPointCollection coll = queryGeom as IPointCollection;
+                            coll.AddPoint(new Point() { X = xmin, Y = ymin, SpatialReference = helper.getWGS84() });
+                            coll.AddPoint(new Point() { X = xmin, Y = ymax, SpatialReference = helper.getWGS84() });
+                            coll.AddPoint(new Point() { X = xmax, Y = ymax, SpatialReference = helper.getWGS84() });
+                            coll.AddPoint(new Point() { X = xmax, Y = ymin, SpatialReference = helper.getWGS84() });
+                            coll.AddPoint(new Point() { X = xmin, Y = ymin, SpatialReference = helper.getWGS84() });
+                            queryGeom.SpatialReference = helper.getWGS84();
+                        }
+                        else
+                        {
+                            useBbox = false;
+                        }
+                    }
+                    else
+                    {
+                        useBbox = false;
+                    }
+                }
+                catch
+                {
+                    useBbox = false;
+                }
             }
 
             long? layerOrdinal;
@@ -247,6 +298,7 @@ namespace GeoJSONSOE
             }
 
             string s = "";
+            
             ESRI.ArcGIS.Carto.IMapServer mapServer = (ESRI.ArcGIS.Carto.IMapServer)serverObjectHelper.ServerObject;
             ESRI.ArcGIS.Carto.IMapServerDataAccess mapServerObjects = (ESRI.ArcGIS.Carto.IMapServerDataAccess)mapServer;
             var lyr = mapServerObjects.GetDataSource(mapServer.DefaultMapName, Convert.ToInt32(layerOrdinal));
@@ -255,12 +307,26 @@ namespace GeoJSONSOE
             {
                 IFeatureClass fclass = (IFeatureClass)lyr;
                 retval = "{\"shape\": \"" + fclass.ShapeFieldName + "\"}";
-                IQueryFilter filter = new QueryFilterClass();
+                IQueryFilter filter = null;
+                if (useBbox)
+                {
+                    IGeoDataset gds = fclass as IGeoDataset;
+                    filter = new SpatialFilterClass();
+                    ISpatialFilter spf = filter as ISpatialFilter;
+                    spf.Geometry = helper.TransformShapeCS(queryGeom, queryGeom.SpatialReference, gds.SpatialReference);
+                    spf.GeometryField = fclass.ShapeFieldName;
+                    spf.SpatialRel = esriSpatialRelEnum.esriSpatialRelIntersects;
+                }
+                else
+                {
+                    filter = new QueryFilterClass();
+                }
                 filter.set_OutputSpatialReference(fclass.ShapeFieldName, getWGS84());
                 if (applyQuery)
                 {
                     filter.WhereClause = whereClause;
                 }
+                
                 IFeatureCursor curs = fclass.Search(filter, false);
                 //apply extension methods here
                 try

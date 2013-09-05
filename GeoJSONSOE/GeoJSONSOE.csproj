@@ -65,6 +65,7 @@
     <Compile Include="CsvExtensions.cs" />
     <Compile Include="GeoJsonExtensions.cs" />
     <Compile Include="GeoJSONSOE.cs" />
+    <Compile Include="Helpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
