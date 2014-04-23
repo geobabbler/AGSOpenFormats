@@ -114,7 +114,7 @@ namespace GeoJSONSOE
             RestResource rootRes = new RestResource(soe_name, false, RootResHandler);
 
             RestOperation geoJsonOper = new RestOperation("GeoJSON",
-                                                      new string[] { "query", "layer","bbox" },
+                                                      new string[] { "query", "layer","bbox", "bboxSR" },
                                                       new string[] { "geojson" },
                                                       ExportGeoJsonHandler);
 
@@ -231,9 +231,11 @@ namespace GeoJSONSOE
             responseProperties = "{\"Content-Type\" : \"application/json\"}"; ;
             bool applyQuery = true;
             bool useBbox = true;
+            bool useBboxSR = true;
             string retval = "";
             string whereClause;
             string boxClause;
+            int bboxSRID = 0;
             IPolygon queryGeom = null;
             Helpers helper = new Helpers();
             bool found = operationInput.TryGetString("query", out whereClause);
@@ -241,6 +243,24 @@ namespace GeoJSONSOE
             {
                 //then no definition query
                 applyQuery = false;
+            }
+
+            string ssrid;
+            found = operationInput.TryGetString("bboxSR", out ssrid);
+            if (!found || string.IsNullOrEmpty(ssrid))
+            {
+                //then no definition query
+                useBboxSR = false;
+            }
+            else
+            {
+                int srid;
+                bool valid = int.TryParse(ssrid, out srid);
+                if (valid)
+                {
+                    bboxSRID = srid;
+                }
+                else { useBboxSR = false; }
             }
 
             found = operationInput.TryGetString("bbox", out boxClause);
@@ -265,14 +285,31 @@ namespace GeoJSONSOE
 
                         if (bxmin && bymin && bxmax && bymax)
                         {
-                            queryGeom = new Polygon() as IPolygon;
-                            IPointCollection coll = queryGeom as IPointCollection;
-                            coll.AddPoint(new Point() { X = xmin, Y = ymin, SpatialReference = helper.getWGS84() });
-                            coll.AddPoint(new Point() { X = xmin, Y = ymax, SpatialReference = helper.getWGS84() });
-                            coll.AddPoint(new Point() { X = xmax, Y = ymax, SpatialReference = helper.getWGS84() });
-                            coll.AddPoint(new Point() { X = xmax, Y = ymin, SpatialReference = helper.getWGS84() });
-                            coll.AddPoint(new Point() { X = xmin, Y = ymin, SpatialReference = helper.getWGS84() });
-                            queryGeom.SpatialReference = helper.getWGS84();
+                            ISpatialReference sr = null;
+                            if (useBboxSR)
+                            {
+                                sr = helper.GetSpatialReference(bboxSRID);
+                                if (sr == null)
+                                {
+                                    //erroneous srid, ignore bounding box
+                                    useBbox = false;
+                                }
+                            }
+                            else
+                            {
+                                sr = helper.getWGS84();
+                            }
+                            if (useBbox)
+                            {
+                                queryGeom = new Polygon() as IPolygon;
+                                IPointCollection coll = queryGeom as IPointCollection;
+                                coll.AddPoint(new Point() { X = xmin, Y = ymin, SpatialReference = sr });
+                                coll.AddPoint(new Point() { X = xmin, Y = ymax, SpatialReference = sr });
+                                coll.AddPoint(new Point() { X = xmax, Y = ymax, SpatialReference = sr });
+                                coll.AddPoint(new Point() { X = xmax, Y = ymin, SpatialReference = sr });
+                                coll.AddPoint(new Point() { X = xmin, Y = ymin, SpatialReference = sr });
+                                queryGeom.SpatialReference = sr;
+                            }
                         }
                         else
                         {

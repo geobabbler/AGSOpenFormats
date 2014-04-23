@@ -80,6 +80,23 @@ namespace GeoJSONSOE
             {
                 return null;
             }
+        }
+
+        public ISpatialReference GetSpatialReference(int FactoryCode)
+        {
+            ISpatialReferenceFactory2 oSpatialReferenceFactory;
+            ISpatialReference oCS;
+            try
+            {
+                Type t = Type.GetTypeFromProgID("esriGeometry.SpatialReferenceEnvironment");
+                oSpatialReferenceFactory = (ISpatialReferenceFactory2)Activator.CreateInstance(t);
+                oCS = oSpatialReferenceFactory.CreateSpatialReference(FactoryCode);
+                return oCS;
+            }
+            catch
+            {
+                return null;
+            }
         } 
     }
 }
